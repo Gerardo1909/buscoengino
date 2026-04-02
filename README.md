@@ -2,8 +2,6 @@
 
 Un motor de búsqueda minimalista implementado desde cero para comprender los fundamentos de Information Retrieval (IR). Este proyecto cubre parsing de texto, tokenización, índices invertidos, scoring (TF/TF-IDF) y ranking básico.
 
----
-
 ## Propósito
 
 Buscoengino es un proyecto diseñado para:
@@ -175,7 +173,7 @@ uv run pytest --cov=src/search_engine tests/
 
 ---
 
-**Stack:** Python 3.13 · Langchain · ChromaDB · Docker 
+**Stack:** Python 3.13 · NLTK · Scikit-learn · Pytest
 
 **Autor:** Gerardo Toboso · [gerardotoboso1909@gmail.com](mailto:gerardotoboso1909@gmail.com)
 
