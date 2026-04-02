@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "buscoengino"
+version = "0.1.0"
+description = "Minimalista motor de búsqueda desde cero. IR pipeline: tokenización → indexado → ranking. Fundamentos sin magia."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "nltk>=3.9.4",
+    "scikit-learn>=1.8.0",
+]
+license = "MIT"
+authors = [
+    {name = "Gerardo Toboso", email = "gerardotoboso1909@gmail.com"}
+]
+maintainers = [
+    {name = "Gerardo Toboso", email = "gerardotoboso1909@gmail.com"}
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+exclude = ["tests*", "*.tests*", "*.tests.*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-check>=2.6.2",
+    "pytest-cov>=7.0.0",
+    "pytest-html==3.2.0",
+]
