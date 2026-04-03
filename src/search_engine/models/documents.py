@@ -13,3 +13,13 @@ class Document:
 
     path: str
     content: str
+
+
+@dataclass
+class TokenizedDocument:
+    """
+    Clase que representa un documento tokenizado.
+    """
+
+    path: str
+    tokens: list[str]
