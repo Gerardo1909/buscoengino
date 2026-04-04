@@ -147,10 +147,3 @@ class BuscoEngino:
 
         results.sort(key=lambda r: r.score, reverse=True)
         return results
-
-
-if __name__ == "__main__":
-    engine = BuscoEngino()
-    results = engine.search("Kurt Cobain Nirvana")
-    for result in results:
-        print(f"{result.score:.4f} - {result.document.path}")
