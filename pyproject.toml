@@ -21,6 +21,9 @@ maintainers = [
     {name = "Gerardo Toboso", email = "gerardotoboso1909@gmail.com"}
 ]
 
+[project.scripts]
+buscoengino = "cli.main:main"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

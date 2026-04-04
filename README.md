@@ -11,6 +11,21 @@ Buscoengino es un proyecto diseñado para:
 - Servir como base para experimentos con ranking y relevancia
 - Ser escalable sin sobreingeniería inicial
 
+## Arquitectura del Motor
+
+![Diagrama de Arquitectura](docs/diagrama.png)
+
+## Interfaz CLI
+
+Buscoengino incluye una interfaz de línea de comandos interactiva que permite realizar búsquedas fácilmente y ver los resultados relevantes.
+
+![Interfaz CLI](docs/cli.png)
+
+Para iniciar la interfaz interactiva:
+```bash
+uv run buscoengino
+```
+
 ## Instalación
 
 > Notar que se usa uv como gestor de dependencias, sin embargo se deja un archivo requirements.txt para quien quiera instalar dependencias usando venv.
@@ -24,148 +39,88 @@ cd buscoengino
 uv sync
 
 # Ejecutar tests
-uv run pytest
+uv run pytest -v
 ```
 
 ## Estructura del Proyecto
 
 ```
 buscoengino/
-├── pyproject.toml              # Configuración del proyecto 
+├── pyproject.toml              # Configuración del proyecto y CLI
 ├── uv.lock                     # Lock file para reproducibilidad
 ├── README.md
-├── .gitignore
 │
 ├── data/
-│   ├── raw/documents/          # Textos originales (entrada del pipeline)
-│   ├── processed/corpus_clean/ # Textos normalizados
-│   └── sample_queries/         # Queries de prueba
+│   ├── raw/documents/          # Documentos que alimentan al motor
+│   └── stop_words.txt          # Archivo con stop words para limpiar vocabulario
 │
-├── src/search_engine/          # Código principal del motor de búsqueda
-│   ├── __init__.py
-│   │
-│   ├── config/
-│   │   └── settings.py         # Paths, configuraciones, flags globales
-│   │
-│   ├── ingestion/
-│   │   └── loader.py           # Lectura de documentos desde archivo
-│   │
-│   ├── preprocessing/
-│   │   ├── tokenizer.py        # Conversión de texto a tokens
-│   │   ├── normalizer.py       # Normalización (minúsculas, puntuación, etc.)
-│   │   └── stopwords.py        # Gestión de palabras vacías
-│   │
-│   ├── indexing/
-│   │   └── inverted_index.py   # Construcción e implementación del índice invertido
-│   │
-│   ├── ranking/
-│   │   ├── tf.py               # Cálculo de Term Frequency
-│   │   ├── tfidf.py            # Cálculo de TF-IDF
-│   │   └── scorer.py           # Scoring de documentos
-│   │
-│   ├── search/
-│   │   └── engine.py           # Pipeline completo: consulta → preprocesamiento → ranking
-│   │
-│   ├── evaluation/
-│   │   └── metrics.py          # Precision, Recall, MRR (opcional)
-│   │
-│   └── utils/
-│       └── io.py               # Funciones de entrada/salida
+├── docs/                       # Imágenes y diagramas
 │
-├── tests/
-│   ├── conftest.py             # Fixtures compartidas
-│   ├── test_tokenizer.py
-│   ├── test_index.py
-│   └── test_search.py
+├── src/
+│   ├── cli/
+│   │   └── main.py             # Interfaz interactiva de consola (CLI)
+│   │
+│   └── search_engine/          # Código principal del motor de búsqueda
+│       ├── config/
+│       │   └── settings.py     # Paths y configuraciones globales
+│       │
+│       ├── ingestion/
+│       │   └── loader.py       # Lectura de documentos desde disco
+│       │
+│       ├── models/
+│       │   └── documents.py    # Modelos de datos centrales (Document, SearchResult, etc.)
+│       │
+│       ├── preprocessing/
+│       │   ├── tokenizer.py    # Conversión de texto a tokens
+│       │   ├── normalizer.py   # Normalización (minúsculas, limpieza, stemming)
+│       │   └── stopwords.py    # Filtrado de palabras vacías
+│       │
+│       ├── indexing/
+│       │   └── vocabulary.py   # Construcción del vocabulario del corpus
+│       │
+│       ├── ranking/
+│       │   ├── tfidf.py        # Cálculo de TF-IDF y vectorización
+│       │   └── scorer.py       # Cálculo de similitud coseno
+│       │
+│       └── search/
+│           └── engine.py       # Pipeline principal explícito (BuscoEngino)
 │
-└── notebooks/
-    └── exploration.ipynb       # Experimentación opcional
+└── tests/
+    └── test_engine.py          # Pruebas unitarias y de integración principales
 ```
 
 ## Pipeline de IR
 
-El motor funciona en cinco etapas:
+El motor funciona mediante un flujo explícito en las siguientes etapas:
 
 ### 1. Ingesta (Ingestion)
-- Leer documentos desde archivos
-- Asignar IDs únicos a cada documento
-- Guardar metadatos (timestamp, fuente, etc.)
+- Carga de documentos de texto plano desde el disco y almacenamiento de metadatos (ruta, contenido).
 
 ### 2. Preprocesamiento (Preprocessing)
-- **Tokenización:** Dividir texto en palabras
-- **Normalización:** Convertir a minúsculas, remover puntuación
-- **Stopwords:** Eliminar palabras comunes (the, a, and, etc.)
+- **Tokenización:** División del texto crudo en palabras individuales.
+- **Normalización:** Conversión a minúsculas, eliminación de signos de puntuación y dígitos, además de aplicar stemming en español.
+- **Stopwords:** Eliminación de palabras vacías utilizando un corpus de stopwords.
 
-### 3. Indexado (Indexing)
-- Construir índice invertido: término → [doc1, doc2, ...]
-- Estructura eficiente para búsquedas rápidas
+### 3. Representación y Vocabulario (Indexing)
+- Construcción de un vocabulario único y materialización del estado completo del corpus (CorpusState).
 
-### 4. Ranking (Ranking)
-- **TF (Term Frequency):** Frecuencia del término en el documento
-- **TF-IDF:** Importancia relativa de un término en la colección
-- **Scoring:** Asignar score a cada documento para una query
+### 4. Ranking y Vectorización (Ranking)
+- **TF (Term Frequency):** Cálculo de frecuencias de los términos normalizados.
+- **IDF (Inverse Document Frequency):** Asignación de frecuencias inversas de los documentos del corpus.
+- **Vectores TF-IDF:** Transformación de cada documento en representaciones vectoriales matemáticas.
+- **Scoring:** Cálculo de la similitud coseno.
 
 ### 5. Búsqueda (Search)
-- Procesar query con el mismo pipeline de preprocesamiento
-- Buscar términos en el índice invertido
-- Rankear documentos por relevancia
-- Retornar resultados ordenados
-
-## Datos de Prueba
-
-Se proporcionan tres niveles de complejidad:
-
-### Dataset 1: Mini corpus controlado
-```
-doc1.txt → "El gato duerme en la casa"
-doc2.txt → "El perro corre en el parque"
-doc3.txt → "El gato juega con el perro"
-```
-
-Queries de prueba:
-```
-"gato"
-"perro"
-"gato perro"
-```
-
-### Dataset 2: Corpus temático
-Documentos categorizados (tecnología, deportes, cocina) para evaluar ranking.
-
-### Dataset 3: Corpus real (futuro)
-- Wikipedia dumps pequeños
-- News datasets (AG News, etc.)
-- 20 Newsgroups
+- Preprocesamiento de la consulta (query) del usuario aplicando los mismos pasos de normalización.
+- Vectorización de la consulta.
+- Comparación de la consulta frente a los vectores del corpus mediante similitud coseno.
+- Retorno de resultados con puntaje (score) mayor a cero, ordenados por relevancia.
 
 ## Testing
 
-Cobertura básica de funcionalidad:
+El proyecto contiene pruebas unitarias exhaustivas y de integración para asegurar que cada módulo funciona correctamente. Se utilizó `pytest`.
 
-### Tokenización
-```
-Input: "Hola mundo!"
-Expected: ["hola", "mundo"]
-```
-
-### Índice Invertido
-```
-doc_a: "gato negro"
-doc_b: "gato blanco"
-
-Result: {
-  "gato": [doc_a, doc_b],
-  "negro": [doc_a],
-  "blanco": [doc_b]
-}
-```
-
-### Búsqueda
-```
-Query: "gato"
-Expected: [doc_a, doc_b] ordenados por score
-```
-
-Ejecutar tests:
+Ejecutar tests con reporte de cobertura:
 ```bash
 uv run pytest -v
 uv run pytest --cov=src/search_engine tests/
@@ -173,7 +128,7 @@ uv run pytest --cov=src/search_engine tests/
 
 ---
 
-**Stack:** Python 3.13 · NLTK · Scikit-learn · Pytest
+**Stack:** Python 3.13 · NLTK · Rich · Pytest
 
 **Autor:** Gerardo Toboso · [gerardotoboso1909@gmail.com](mailto:gerardotoboso1909@gmail.com)
 
