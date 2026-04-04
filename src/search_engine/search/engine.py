@@ -5,7 +5,7 @@ Módulo que implementa el motor de búsqueda.
 from __future__ import annotations
 
 from search_engine.config.settings import RAW_DOCUMENTS_DIR, STOP_WORDS_FILE
-from search_engine.indexing.inverted_index import InvertedIndex, VocabularyBuilder
+from search_engine.indexing.vocabulary import VocabularyBuilder
 from search_engine.ingestion.loader import Loader
 from search_engine.models.documents import (
     CorpusState,
@@ -33,7 +33,7 @@ class BuscoEngino:
         self,
         documents_path=RAW_DOCUMENTS_DIR,
         stopwords_path=STOP_WORDS_FILE,
-    ) -> None:
+    ):
         self.documents_path = documents_path
         self.stopwords_path = stopwords_path
 
@@ -43,24 +43,10 @@ class BuscoEngino:
         self.tfidf = TFIDF()
         self.scorer = Scorer()
         self.vocabulary_builder = VocabularyBuilder()
-        self.inverted_index = InvertedIndex()
 
-        self._stopwords_filter: Stopwords | None = None
+        self._stopwords_filter = Stopwords(self.stopwords_path, self.normalizer)
         self.state = CorpusState()
         self._initialized = False
-
-    def _validate_paths(self) -> None:
-        """
-        Valida que las rutas críticas del motor existan y sean del tipo esperado.
-        """
-        if not self.documents_path.exists() or not self.documents_path.is_dir():
-            raise FileNotFoundError(
-                f"La ruta de documentos no existe o no es un directorio: {self.documents_path}"
-            )
-        if not self.stopwords_path.exists() or not self.stopwords_path.is_file():
-            raise FileNotFoundError(
-                f"El archivo de stopwords no existe: {self.stopwords_path}"
-            )
 
     def _preprocess_text(self, text: str) -> list[str]:
         """
@@ -92,11 +78,8 @@ class BuscoEngino:
     def _build_corpus_state(self) -> None:
         """
         Materializa el estado completo del corpus:
-        documentos, preprocesado, vocabulario, IDF, vectores e índice invertido.
+        documentos, preprocesado, vocabulario, IDF, vectores.
         """
-        self._validate_paths()
-
-        self._stopwords_filter = Stopwords(self.stopwords_path, self.normalizer)
         documents = self.loader.load_documents(self.documents_path)
         processed_documents = self._preprocess_documents(documents)
 
@@ -110,25 +93,12 @@ class BuscoEngino:
             self.tfidf.vectorize(doc.tokens, vocabulary, idf)
             for doc in processed_documents
         ]
-        inverted_index = self.inverted_index.build(
-            {doc.path: doc.tokens for doc in processed_documents}
-        )
 
         self.state.documents = documents
         self.state.processed_documents = processed_documents
         self.state.vocabulary = vocabulary
         self.state.idf = idf
         self.state.document_vectors = document_vectors
-        self.state.inverted_index = inverted_index
-
-        self._initialized = True
-
-    def _ensure_initialized(self) -> None:
-        """
-        Inicializa el estado del motor una única vez (lazy initialization).
-        """
-        if not self._initialized:
-            self._build_corpus_state()
 
     def _build_query_representation(self, query: str) -> QueryRepresentation:
         """
@@ -157,8 +127,8 @@ class BuscoEngino:
         Returns:
             Lista de SearchResult ordenados por relevancia descendente.
         """
-        self._ensure_initialized()
 
+        self._build_corpus_state()
         if not self.state.documents:
             return []
 
@@ -181,6 +151,6 @@ class BuscoEngino:
 
 if __name__ == "__main__":
     engine = BuscoEngino()
-    results = engine.search("Messi")
+    results = engine.search("Kurt Cobain Nirvana")
     for result in results:
         print(f"{result.score:.4f} - {result.document.path}")
