@@ -1,12 +1,5 @@
 """
 Modelos de datos centrales del motor de búsqueda.
-
-Estos modelos hacen explícito el pipeline:
-
-Document -> ProcessedDocument -> QueryRepresentation -> SearchResult
-
-También encapsulan el estado del corpus (`CorpusState`) para evitar pasar
-estructuras sueltas entre módulos y reducir la carga cognitiva.
 """
 
 from __future__ import annotations
