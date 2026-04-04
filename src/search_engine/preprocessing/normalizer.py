@@ -14,6 +14,7 @@ class Normalizer:
     """
 
     def __init__(self) -> None:
+        # Usamos en español por la predominancia del idioma en nuestro corpus
         self.stemmer = SnowballStemmer("spanish")
 
     def remove_punctuation(self, text: str) -> str:

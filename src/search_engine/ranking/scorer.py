@@ -1,8 +1,5 @@
 """
 Utilidades de ranking basadas en similitud vectorial.
-
-Este módulo mantiene una única responsabilidad:
-calcular la similitud coseno entre vectores.
 """
 
 from __future__ import annotations

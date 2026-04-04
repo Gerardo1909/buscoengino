@@ -1,15 +1,5 @@
 """
 Módulo de utilidades para cálculo de TF-IDF y vectorización.
-
-Este módulo centraliza toda la lógica relacionada con TF-IDF:
-
-- Frecuencia de término (TF).
-- Frecuencia inversa de documentos (IDF).
-- Vectorización de tokens sobre un vocabulario fijo.
-- Construcción de la matriz/vectorización del corpus.
-
-Objetivo de diseño:
-mantener una interfaz simple y explícita para el pipeline de ranking.
 """
 
 from __future__ import annotations
@@ -24,9 +14,6 @@ import numpy as np
 class TFIDF:
     """
     Calcula componentes TF-IDF y genera vectores para documentos y consultas.
-
-    La clase no depende de librerías de IR externas; usa estructuras estándar
-    y `numpy` para mantener el comportamiento transparente y fácil de mantener.
     """
 
     def term_frequency(self, tokens: Iterable[str]) -> dict[str, float]:
