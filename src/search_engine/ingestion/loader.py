@@ -32,20 +32,18 @@ class Loader:
         Args:
             path: Ruta del directorio que contiene los documentos.
 
+        Raises:
+            ValueError: Si el path es un archivo y no es un .txt.
+
         Returns:
             Lista de documentos cargados desde archivos .txt.
         """
         if path.is_file():
             if path.suffix.lower() != ".txt":
-                return []
+                raise ValueError(f"Tipo de archivo no soportado: {path.suffix}")
             return [self.load_document(path)]
-
-        if not path.exists():
-            return []
-
         documents: list[Document] = []
         for file_path in sorted(path.rglob("*.txt")):
             if file_path.is_file():
                 documents.append(self.load_document(file_path))
-
         return documents
