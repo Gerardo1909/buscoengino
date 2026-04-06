@@ -2,7 +2,9 @@
 Módulo que se encarga de la lectura de documentos para su ingesta en el motor de búsqueda.
 """
 
+import json
 from pathlib import Path
+from typing import Any, Dict
 
 from search_engine.models.documents import Document
 
@@ -47,3 +49,32 @@ class Loader:
             if file_path.is_file():
                 documents.append(self.load_document(file_path))
         return documents
+
+    def load_json(self, path: Path) -> Dict[str, Any]:
+        """
+        Carga datos desde un archivo JSON.
+
+        Args:
+            path: Ruta del archivo JSON a leer.
+
+        Returns:
+            Diccionario con los datos cargados. Retorna un diccionario vacío si el archivo no existe o es inválido.
+        """
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                pass
+        return {}
+
+    def save_json(self, data: Dict[str, Any], path: Path) -> None:
+        """
+        Guarda un diccionario en formato JSON.
+
+        Args:
+            data: Diccionario con los datos a guardar.
+            path: Ruta donde se guardará el archivo JSON.
+        """
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
