@@ -19,6 +19,7 @@ from search_engine.preprocessing.stopwords import Stopwords
 from search_engine.preprocessing.tokenizer import Tokenizer
 from search_engine.ranking.scorer import Scorer
 from search_engine.ranking.tfidf import TFIDF
+from search_engine.search.feedback import FeedbackStore
 
 
 class BuscoEngino:
@@ -47,6 +48,7 @@ class BuscoEngino:
         self._stopwords_filter = Stopwords(self.stopwords_path, self.normalizer)
         self.state = CorpusState()
         self._initialized = False
+        self.feedback_store = FeedbackStore()
 
     def _preprocess_text(self, text: str) -> list[str]:
         """
@@ -111,6 +113,14 @@ class BuscoEngino:
         vector = self.tfidf.vectorize(tokens, self.state.vocabulary, self.state.idf)
         return QueryRepresentation(original_query=query, tokens=tokens, vector=vector)
 
+    def add_feedback(self, query: str, doc_path: str, is_relevant: bool) -> None:
+        """
+        Registra feedback sobre la relevancia de un documento para una consulta.
+        """
+        self._build_corpus_state()
+        query_rep = self._build_query_representation(query)
+        self.feedback_store.add_feedback(query, query_rep.vector, doc_path, is_relevant)
+
     def search(self, query: str) -> list[SearchResult]:
         """
         Ejecuta la búsqueda por similitud coseno sobre vectores TF-IDF.
@@ -133,15 +143,22 @@ class BuscoEngino:
             return []
 
         query_representation = self._build_query_representation(query)
+        feedback_scores = self.feedback_store.get_feedback_scores(
+            query_representation.vector
+        )
 
         results: list[SearchResult] = []
         for document, document_vector in zip(
             self.state.documents, self.state.document_vectors
         ):
-            score = self.scorer.cosine_similarity(
+            tfidf_score = self.scorer.cosine_similarity(
                 query_representation.vector,
                 document_vector,
             )
+            fb_score = feedback_scores.get(document.path, 0.0)
+
+            score = (0.7 * tfidf_score) + (0.3 * fb_score)
+
             if score > 0.0:
                 results.append(SearchResult(document=document, score=score))
 
