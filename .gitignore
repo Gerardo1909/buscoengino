@@ -59,6 +59,7 @@ data/sample_queries/**
 *.pkl
 *.pickle
 *.joblib
+feedback.json
 
 # ============================================================================
 # NLTK (corpus, tokenizers)
