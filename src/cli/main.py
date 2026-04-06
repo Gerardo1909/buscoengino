@@ -4,6 +4,7 @@ CLI interactivo para BuscoEngino motor de búsqueda.
 
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import Confirm
 from rich.table import Table
 from rich.text import Text
 
@@ -102,6 +103,11 @@ def main() -> None:
                 display_results(console, results)
                 console.print()
                 display_top_result(console, results[0])
+
+                is_relevant = Confirm.ask(
+                    f"\n[cyan]¿Fue relevante el resultado principal ({results[0].document.path})?[/cyan]"
+                )
+                engine.add_feedback(query, results[0].document.path, is_relevant)
             else:
                 console.print("[yellow]No se encontraron resultados[/yellow]")
 
