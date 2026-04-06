@@ -83,7 +83,8 @@ buscoengino/
 │       │   └── scorer.py       # Cálculo de similitud coseno
 │       │
 │       └── search/
-│           └── engine.py       # Pipeline principal explícito (BuscoEngino)
+│           ├── engine.py       # Pipeline principal explícito (BuscoEngino)
+│           └── feedback.py     # Almacenamiento y cálculo de retroalimentación histórica
 │
 └── tests/
     └── test_engine.py          # Pruebas unitarias y de integración principales
@@ -110,10 +111,12 @@ El motor funciona mediante un flujo explícito en las siguientes etapas:
 - **Vectores TF-IDF:** Transformación de cada documento en representaciones vectoriales matemáticas.
 - **Scoring:** Cálculo de la similitud coseno.
 
-### 5. Búsqueda (Search)
+### 5. Búsqueda (Search) y Feedback
 - Preprocesamiento de la consulta (query) del usuario aplicando los mismos pasos de normalización.
 - Vectorización de la consulta.
-- Comparación de la consulta frente a los vectores del corpus mediante similitud coseno.
+- Comparación de la consulta frente a los vectores del corpus mediante similitud coseno (Puntaje TF-IDF).
+- Consulta al almacén de feedback buscando la consulta histórica más cercana (Nearest Neighbor) a la actual.
+- Interpolación de puntajes (TF-IDF + Histórico) para elevar los documentos que los usuarios consideraron relevantes previamente.
 - Retorno de resultados con puntaje (score) mayor a cero, ordenados por relevancia.
 
 ## Testing
